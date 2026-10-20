@@ -1,5 +1,4 @@
 
-from spider_solitaire.core.card import Card
 from spider_solitaire.core.game import Game
 from spider_solitaire.core.rules import (
     can_place_card,
@@ -33,12 +32,12 @@ def move_cards(
     moving_cards = source[-count:]
 
     if not is_valid_sequence(moving_cards):
-        raise ValueError("As cartas selecionadas nao formam uma sequencia valida.")
+        raise ValueError(
+            "As cartas selecionadas nao formam uma sequencia valida."
+        )
 
     if target and not can_place_card(moving_cards[0], target[-1]):
         raise ValueError("Movimento invalido para essa coluna.")
-
-    source_length_before = len(source)
 
     target.extend(moving_cards)
     del source[-count:]
@@ -46,6 +45,7 @@ def move_cards(
     if source and not source[-1].is_face_up:
         source[-1].reveal()
 
+    game.register_move()
     check_completed_sequences(game)
 
 
@@ -72,28 +72,28 @@ def deal_from_stock(game: Game) -> None:
 def check_completed_sequences(game: Game) -> None:
     """Remove sequencias completas do mesmo naipe, do Rei ao As."""
 
+    expected_values = list(range(13, 0, -1))
+
     for column in game.columns:
-        if len(column) < 13:
-            continue
+        while len(column) >= 13:
+            sequence = column[-13:]
 
-        sequence = column[-13:]
+            if not all(card.is_face_up for card in sequence):
+                break
 
-        if not all(card.is_face_up for card in sequence):
-            continue
+            if not all(
+                card.suit == sequence[0].suit
+                for card in sequence
+            ):
+                break
 
-        if not all(
-            card.suit == sequence[0].suit
-            for card in sequence
-        ):
-            continue
+            if [card.value for card in sequence] != expected_values:
+                break
 
-        expected_values = list(range(13, 0, -1))
+            game.completed_sequences.append(sequence.copy())
+            del column[-13:]
 
-        if [card.value for card in sequence] != expected_values:
-            continue
+            game.register_completed_sequence()
 
-        game.completed_sequences.append(sequence.copy())
-        del column[-13:]
-
-        if column and not column[-1].is_face_up:
-            column[-1].reveal()
+            if column and not column[-1].is_face_up:
+                column[-1].reveal()
