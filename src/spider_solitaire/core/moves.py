@@ -14,6 +14,9 @@ def move_cards(
 ) -> None:
     """Move uma carta ou sequência entre duas colunas."""
 
+    if game.is_won:
+        raise ValueError("A partida ja foi encerrada.")
+
     if source_index == target_index:
         raise ValueError("A origem e o destino devem ser diferentes.")
 
@@ -51,6 +54,9 @@ def move_cards(
 
 def deal_from_stock(game: Game) -> None:
     """Distribui uma carta virada para cima em cada coluna."""
+
+    if game.is_won:
+        raise ValueError("A partida ja foi encerrada.")
 
     if not game.stock:
         raise ValueError("O monte esta vazio.")
